@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,11 +18,11 @@ body {
     font-family: Arial, sans-serif;
     background: #f3f5fa;
     color: #222;
-    padding: 20px;
+    padding: 15px;
 }
 
 .container {
-    max-width: 1000px;
+    max-width: 900px;
     margin: auto;
 }
 
@@ -29,14 +30,12 @@ header {
     background: #3f51b5;
     color: white;
     text-align: center;
-    padding: 25px 15px;
+    padding: 25px 12px;
     border-radius: 15px;
     margin-bottom: 20px;
 }
 
-header h1 {
-    margin-bottom: 10px;
-}
+header h1 { margin-bottom: 10px; }
 
 .card {
     background: white;
@@ -95,10 +94,6 @@ button {
     margin-top: 15px;
 }
 
-button:hover {
-    opacity: 0.9;
-}
-
 .delete-btn {
     background: #e53935;
     padding: 8px 12px;
@@ -107,7 +102,7 @@ button:hover {
 
 .summary {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 12px;
 }
 
@@ -119,12 +114,12 @@ button:hover {
 }
 
 .count-box h3 {
-    font-size: 15px;
+    font-size: 14px;
     margin-bottom: 10px;
 }
 
 .count-box p {
-    font-size: 27px;
+    font-size: 26px;
     color: #3f51b5;
     font-weight: bold;
 }
@@ -139,19 +134,7 @@ button:hover {
     overflow-wrap: anywhere;
 }
 
-.student strong {
-    color: #3f51b5;
-}
-
-.student p {
-    margin-top: 5px;
-}
-
-.empty {
-    color: #777;
-    text-align: center;
-    padding: 20px;
-}
+.student strong { color: #3f51b5; }
 
 .note {
     color: #666;
@@ -159,14 +142,21 @@ button:hover {
     margin-top: 12px;
 }
 
-@media (max-width: 500px) {
-    body {
-        padding: 10px;
-    }
+.status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
 
-    .card {
-        padding: 15px;
-    }
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+}
+
+@media (max-width: 500px) {
+    body { padding: 8px; }
+    .card { padding: 15px; }
 }
 </style>
 </head>
@@ -177,24 +167,21 @@ button:hover {
 <header>
     <h1>🍽️ Hostel Food Count</h1>
     <p>Daily Food Selection & Student Count</p>
+    <p class="status" id="status">Connecting to database...</p>
 </header>
 
-<!-- ROOM SELECTION -->
 <div class="card">
-    <h2>Room Details</h2>
-
+    <h2>🏠 Room Details</h2>
     <label for="room">Room Number</label>
-    <input type="text" id="room" placeholder="Enter room number (e.g. 101)">
+    <input type="text" id="room" placeholder="Enter room number, e.g. 101">
 </div>
 
-<!-- STUDENT FORM -->
 <div class="card">
-    <h2>Student Food Entry</h2>
+    <h2>👤 Student Food Entry</h2>
 
     <form id="foodForm">
-
         <label for="name">Student Name</label>
-        <input type="text" id="name" placeholder="Enter your full name" required>
+        <input type="text" id="name" placeholder="Enter your name" required>
 
         <h3 style="margin-top:20px;">🌅 Morning Breakfast</h3>
         <div class="food-options">
@@ -226,80 +213,106 @@ button:hover {
             <label><input type="checkbox" name="food" value="Sweet"> Sweet</label>
         </div>
 
-        <button type="submit">Submit Food Details</button>
+        <button type="submit" id="submitBtn">Submit Food Details</button>
     </form>
 </div>
 
-<!-- TOTAL COUNT -->
 <div class="card">
     <h2>📊 Total Food Count</h2>
     <div class="summary" id="summary"></div>
 </div>
 
-<!-- STUDENT LIST -->
 <div class="card">
     <h2>👥 Student Details</h2>
     <p id="studentTotal" style="margin-bottom:15px;"></p>
-    <div id="studentList"></div>
-    <p class="note">Entries are automatically removed after 24 hours.</p>
+    <div id="studentList">
+        <p class="empty">Enter a room number to see entries.</p>
+    </div>
+    <p class="note">Entries expire 24 hours after submission. Expired entries are cleaned up when the website is active.</p>
 </div>
 
 </div>
+
+<!-- Firebase libraries -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-const STORAGE_KEY = "hostelFoodEntries";
+// STEP 1: Replace these values with your Firebase project details.
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
 const DAY = 24 * 60 * 60 * 1000;
 
+const statusText = document.getElementById("status");
 const form = document.getElementById("foodForm");
 const roomInput = document.getElementById("room");
 const nameInput = document.getElementById("name");
 const summary = document.getElementById("summary");
 const studentList = document.getElementById("studentList");
 const studentTotal = document.getElementById("studentTotal");
+const submitBtn = document.getElementById("submitBtn");
 
-function getEntries() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
-        return [];
-    }
+let db;
+let entriesRef;
+let allEntries = {};
+let currentUser = null;
+
+const foodNames = [
+    "Breakfast",
+    "Morning Tea",
+    "Lunch",
+    "Tiffin Box",
+    "Snacks",
+    "Evening Tea",
+    "Veg Dinner",
+    "Non-Veg Dinner",
+    "Sweet"
+];
+
+function normalizeRoom(room) {
+    return room.trim().toLowerCase();
 }
 
-function saveEntries(entries) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
 }
 
-function cleanExpired() {
-    const now = Date.now();
-    const entries = getEntries().filter(
-        entry => now - entry.createdAt < DAY
-    );
-    saveEntries(entries);
-    return entries;
+function getRoomEntries() {
+    const room = normalizeRoom(roomInput.value);
+
+    if (!room) return [];
+
+    return Object.entries(allEntries)
+        .filter(([id, entry]) =>
+            normalizeRoom(entry.room || "") === room
+        )
+        .map(([id, entry]) => ({ id, ...entry }))
+        .sort((a, b) => a.createdAt - b.createdAt);
 }
 
 function render() {
-    const entries = cleanExpired();
-    const room = roomInput.value.trim();
+    const entries = getRoomEntries();
 
-    const visibleEntries = entries.filter(
-        entry => entry.room.toLowerCase() === room.toLowerCase()
-    );
+    const counts = {};
+    foodNames.forEach(food => counts[food] = 0);
 
-    const counts = {
-        "Breakfast": 0,
-        "Morning Tea": 0,
-        "Lunch": 0,
-        "Tiffin Box": 0,
-        "Snacks": 0,
-        "Evening Tea": 0,
-        "Veg Dinner": 0,
-        "Non-Veg Dinner": 0,
-        "Sweet": 0
-    };
-
-    visibleEntries.forEach(entry => {
-        entry.foods.forEach(food => {
+    entries.forEach(entry => {
+        (entry.foods || []).forEach(food => {
             if (counts[food] !== undefined) {
                 counts[food]++;
             }
@@ -308,13 +321,12 @@ function render() {
 
     summary.innerHTML = "";
 
-    const totalBox = document.createElement("div");
-    totalBox.className = "count-box";
-    totalBox.innerHTML =
-        `<h3>Total Students</h3><p>${visibleEntries.length}</p>`;
-    summary.appendChild(totalBox);
+    const total = document.createElement("div");
+    total.className = "count-box";
+    total.innerHTML = `<h3>Total Students</h3><p>${entries.length}</p>`;
+    summary.appendChild(total);
 
-    Object.entries(counts).forEach(([food, count]) => {
+    foodNames.forEach(food => {
         const box = document.createElement("div");
         box.className = "count-box";
 
@@ -322,32 +334,39 @@ function render() {
         title.textContent = food;
 
         const number = document.createElement("p");
-        number.textContent = count;
+        number.textContent = counts[food];
 
         box.append(title, number);
         summary.appendChild(box);
     });
 
     studentTotal.textContent =
-        `Room ${room || "-"} | Total Students: ${visibleEntries.length}`;
+        `Room ${roomInput.value.trim() || "-"} | Total Students: ${entries.length}`;
 
     studentList.innerHTML = "";
 
-    if (visibleEntries.length === 0) {
+    if (!roomInput.value.trim()) {
         studentList.innerHTML =
-            '<p class="empty">No students have submitted their food details yet.</p>';
+            '<p class="empty">Enter a room number to see entries.</p>';
         return;
     }
 
-    visibleEntries.forEach(entry => {
+    if (entries.length === 0) {
+        studentList.innerHTML =
+            '<p class="empty">No food entries for this room yet.</p>';
+        return;
+    }
+
+    entries.forEach(entry => {
         const card = document.createElement("div");
         card.className = "student";
 
-        const title = document.createElement("strong");
-        title.textContent = entry.name;
+        const name = document.createElement("strong");
+        name.textContent = entry.name;
 
-        const details = document.createElement("p");
-        details.textContent = "Food: " + (entry.foods.join(", ") || "None");
+        const foods = document.createElement("p");
+        foods.textContent = "Food: " +
+            ((entry.foods || []).join(", ") || "No food selected");
 
         const time = document.createElement("p");
         time.style.fontSize = "12px";
@@ -355,36 +374,95 @@ function render() {
         time.textContent = "Submitted: " +
             new Date(entry.createdAt).toLocaleString();
 
-        const del = document.createElement("button");
-        del.className = "delete-btn";
-        del.textContent = "Delete Entry";
+        card.append(name, foods, time);
 
-        del.addEventListener("click", () => {
-            const updated = getEntries().filter(
-                item => item.id !== entry.id
-            );
-            saveEntries(updated);
-            render();
-        });
+        // Only the person who created the entry can delete it.
+        if (entry.uid === currentUser.uid) {
+            const del = document.createElement("button");
+            del.className = "delete-btn";
+            del.textContent = "Delete My Entry";
 
-        card.append(title, details, time, del);
+            del.addEventListener("click", async () => {
+                if (!confirm("Delete your food entry?")) return;
+
+                try {
+                    await entriesRef.child(entry.id).remove();
+                } catch (error) {
+                    alert("Could not delete entry: " + error.message);
+                }
+            });
+
+            card.appendChild(del);
+        }
+
         studentList.appendChild(card);
     });
 }
 
-form.addEventListener("submit", function(event) {
+// Remove expired entries. This runs when the app is active.
+async function cleanExpired() {
+    if (!currentUser) return;
+
+    const cutoff = Date.now() - DAY;
+    const updates = {};
+
+    Object.entries(allEntries).forEach(([id, entry]) => {
+        if (entry.createdAt && entry.createdAt <= cutoff) {
+            updates[id] = null;
+        }
+    });
+
+    if (Object.keys(updates).length > 0) {
+        try {
+            await entriesRef.update(updates);
+        } catch (error) {
+            console.error("Expiry cleanup failed:", error);
+        }
+    }
+}
+
+async function startApp() {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        entriesRef = db.ref("foodEntries");
+
+        const result = await firebase.auth().signInAnonymously();
+        currentUser = result.user;
+
+        statusText.textContent = "🟢 Connected — live updates enabled";
+
+        // Every phone receives updates from the shared database.
+        entriesRef.on("value", async snapshot => {
+            allEntries = snapshot.val() || {};
+            render();
+            await cleanExpired();
+        }, error => {
+            statusText.textContent = "Database error: " + error.message;
+        });
+
+        // Clean expired entries while the page is open.
+        setInterval(cleanExpired, 60 * 1000);
+
+    } catch (error) {
+        statusText.textContent = "Connection failed: " + error.message;
+        console.error(error);
+    }
+}
+
+form.addEventListener("submit", async event => {
     event.preventDefault();
+
+    if (!currentUser) {
+        alert("Database is not connected yet. Please try again.");
+        return;
+    }
 
     const room = roomInput.value.trim();
     const name = nameInput.value.trim();
 
-    if (!room) {
-        alert("Please enter your room number.");
-        return;
-    }
-
-    if (!name) {
-        alert("Please enter your name.");
+    if (!room || !name) {
+        alert("Please enter your room number and name.");
         return;
     }
 
@@ -395,36 +473,34 @@ form.addEventListener("submit", function(event) {
     const lunch = document.querySelector('input[name="lunch"]:checked');
     const dinner = document.querySelector('input[name="dinner"]:checked');
 
-    if (lunch && lunch.value !== "No Lunch") {
-        foods.push(lunch.value);
+    if (lunch && lunch.value !== "No Lunch") foods.push(lunch.value);
+    if (dinner && dinner.value !== "No Dinner") foods.push(dinner.value);
+
+    submitBtn.disabled = true;
+
+    try {
+        const newEntry = entriesRef.push();
+
+        await newEntry.set({
+            room,
+            name,
+            foods,
+            uid: currentUser.uid,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        form.reset();
+        alert("Food details submitted successfully!");
+    } catch (error) {
+        alert("Could not submit: " + error.message);
+    } finally {
+        submitBtn.disabled = false;
     }
-
-    if (dinner && dinner.value !== "No Dinner") {
-        foods.push(dinner.value);
-    }
-
-    const entries = cleanExpired();
-
-    entries.push({
-        id: Date.now().toString() + Math.random().toString(36).slice(2),
-        room,
-        name,
-        foods,
-        createdAt: Date.now()
-    });
-
-    saveEntries(entries);
-
-    form.reset();
-    render();
 });
 
 roomInput.addEventListener("input", render);
 
-// Remove expired entries when the page is opened and periodically
-cleanExpired();
-render();
-setInterval(render, 60 * 1000);
+startApp();
 </script>
 </body>
 </html>
