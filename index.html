@@ -1,0 +1,430 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hostel Food Count</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f5fa;
+    color: #222;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+header {
+    background: #3f51b5;
+    color: white;
+    text-align: center;
+    padding: 25px 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    margin-bottom: 10px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px #00000010;
+}
+
+h2 {
+    color: #3f51b5;
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: bold;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+.food-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 10px 0;
+}
+
+.food-options label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: normal;
+    margin: 5px 0;
+}
+
+.food-options input {
+    width: auto;
+}
+
+button {
+    background: #3f51b5;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-top: 15px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.delete-btn {
+    background: #e53935;
+    padding: 8px 12px;
+    margin-top: 10px;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.count-box {
+    background: #eef0ff;
+    padding: 18px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.count-box h3 {
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.count-box p {
+    font-size: 27px;
+    color: #3f51b5;
+    font-weight: bold;
+}
+
+.student {
+    border: 1px solid #ddd;
+    border-left: 5px solid #3f51b5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.student strong {
+    color: #3f51b5;
+}
+
+.student p {
+    margin-top: 5px;
+}
+
+.empty {
+    color: #777;
+    text-align: center;
+    padding: 20px;
+}
+
+.note {
+    color: #666;
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+@media (max-width: 500px) {
+    body {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1>🍽️ Hostel Food Count</h1>
+    <p>Daily Food Selection & Student Count</p>
+</header>
+
+<!-- ROOM SELECTION -->
+<div class="card">
+    <h2>Room Details</h2>
+
+    <label for="room">Room Number</label>
+    <input type="text" id="room" placeholder="Enter room number (e.g. 101)">
+</div>
+
+<!-- STUDENT FORM -->
+<div class="card">
+    <h2>Student Food Entry</h2>
+
+    <form id="foodForm">
+
+        <label for="name">Student Name</label>
+        <input type="text" id="name" placeholder="Enter your full name" required>
+
+        <h3 style="margin-top:20px;">🌅 Morning Breakfast</h3>
+        <div class="food-options">
+            <label><input type="checkbox" name="food" value="Breakfast"> Breakfast</label>
+            <label><input type="checkbox" name="food" value="Morning Tea"> Tea</label>
+        </div>
+
+        <h3 style="margin-top:20px;">☀️ Afternoon Lunch</h3>
+        <div class="food-options">
+            <label><input type="radio" name="lunch" value="Lunch"> Lunch</label>
+            <label><input type="radio" name="lunch" value="Tiffin Box"> Tiffin Box</label>
+            <label><input type="radio" name="lunch" value="No Lunch"> No Lunch</label>
+        </div>
+
+        <h3 style="margin-top:20px;">🌆 Evening Snacks</h3>
+        <div class="food-options">
+            <label><input type="checkbox" name="food" value="Snacks"> Snacks</label>
+            <label><input type="checkbox" name="food" value="Evening Tea"> Tea</label>
+        </div>
+
+        <h3 style="margin-top:20px;">🌙 Night Dinner</h3>
+        <div class="food-options">
+            <label><input type="radio" name="dinner" value="Veg Dinner"> Veg</label>
+            <label><input type="radio" name="dinner" value="Non-Veg Dinner"> Non-Veg</label>
+            <label><input type="radio" name="dinner" value="No Dinner"> No Dinner</label>
+        </div>
+
+        <div class="food-options">
+            <label><input type="checkbox" name="food" value="Sweet"> Sweet</label>
+        </div>
+
+        <button type="submit">Submit Food Details</button>
+    </form>
+</div>
+
+<!-- TOTAL COUNT -->
+<div class="card">
+    <h2>📊 Total Food Count</h2>
+    <div class="summary" id="summary"></div>
+</div>
+
+<!-- STUDENT LIST -->
+<div class="card">
+    <h2>👥 Student Details</h2>
+    <p id="studentTotal" style="margin-bottom:15px;"></p>
+    <div id="studentList"></div>
+    <p class="note">Entries are automatically removed after 24 hours.</p>
+</div>
+
+</div>
+
+<script>
+const STORAGE_KEY = "hostelFoodEntries";
+const DAY = 24 * 60 * 60 * 1000;
+
+const form = document.getElementById("foodForm");
+const roomInput = document.getElementById("room");
+const nameInput = document.getElementById("name");
+const summary = document.getElementById("summary");
+const studentList = document.getElementById("studentList");
+const studentTotal = document.getElementById("studentTotal");
+
+function getEntries() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveEntries(entries) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function cleanExpired() {
+    const now = Date.now();
+    const entries = getEntries().filter(
+        entry => now - entry.createdAt < DAY
+    );
+    saveEntries(entries);
+    return entries;
+}
+
+function render() {
+    const entries = cleanExpired();
+    const room = roomInput.value.trim();
+
+    const visibleEntries = entries.filter(
+        entry => entry.room.toLowerCase() === room.toLowerCase()
+    );
+
+    const counts = {
+        "Breakfast": 0,
+        "Morning Tea": 0,
+        "Lunch": 0,
+        "Tiffin Box": 0,
+        "Snacks": 0,
+        "Evening Tea": 0,
+        "Veg Dinner": 0,
+        "Non-Veg Dinner": 0,
+        "Sweet": 0
+    };
+
+    visibleEntries.forEach(entry => {
+        entry.foods.forEach(food => {
+            if (counts[food] !== undefined) {
+                counts[food]++;
+            }
+        });
+    });
+
+    summary.innerHTML = "";
+
+    const totalBox = document.createElement("div");
+    totalBox.className = "count-box";
+    totalBox.innerHTML =
+        `<h3>Total Students</h3><p>${visibleEntries.length}</p>`;
+    summary.appendChild(totalBox);
+
+    Object.entries(counts).forEach(([food, count]) => {
+        const box = document.createElement("div");
+        box.className = "count-box";
+
+        const title = document.createElement("h3");
+        title.textContent = food;
+
+        const number = document.createElement("p");
+        number.textContent = count;
+
+        box.append(title, number);
+        summary.appendChild(box);
+    });
+
+    studentTotal.textContent =
+        `Room ${room || "-"} | Total Students: ${visibleEntries.length}`;
+
+    studentList.innerHTML = "";
+
+    if (visibleEntries.length === 0) {
+        studentList.innerHTML =
+            '<p class="empty">No students have submitted their food details yet.</p>';
+        return;
+    }
+
+    visibleEntries.forEach(entry => {
+        const card = document.createElement("div");
+        card.className = "student";
+
+        const title = document.createElement("strong");
+        title.textContent = entry.name;
+
+        const details = document.createElement("p");
+        details.textContent = "Food: " + (entry.foods.join(", ") || "None");
+
+        const time = document.createElement("p");
+        time.style.fontSize = "12px";
+        time.style.color = "#777";
+        time.textContent = "Submitted: " +
+            new Date(entry.createdAt).toLocaleString();
+
+        const del = document.createElement("button");
+        del.className = "delete-btn";
+        del.textContent = "Delete Entry";
+
+        del.addEventListener("click", () => {
+            const updated = getEntries().filter(
+                item => item.id !== entry.id
+            );
+            saveEntries(updated);
+            render();
+        });
+
+        card.append(title, details, time, del);
+        studentList.appendChild(card);
+    });
+}
+
+form.addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const room = roomInput.value.trim();
+    const name = nameInput.value.trim();
+
+    if (!room) {
+        alert("Please enter your room number.");
+        return;
+    }
+
+    if (!name) {
+        alert("Please enter your name.");
+        return;
+    }
+
+    const foods = Array.from(
+        document.querySelectorAll('input[name="food"]:checked')
+    ).map(input => input.value);
+
+    const lunch = document.querySelector('input[name="lunch"]:checked');
+    const dinner = document.querySelector('input[name="dinner"]:checked');
+
+    if (lunch && lunch.value !== "No Lunch") {
+        foods.push(lunch.value);
+    }
+
+    if (dinner && dinner.value !== "No Dinner") {
+        foods.push(dinner.value);
+    }
+
+    const entries = cleanExpired();
+
+    entries.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        room,
+        name,
+        foods,
+        createdAt: Date.now()
+    });
+
+    saveEntries(entries);
+
+    form.reset();
+    render();
+});
+
+roomInput.addEventListener("input", render);
+
+// Remove expired entries when the page is opened and periodically
+cleanExpired();
+render();
+setInterval(render, 60 * 1000);
+</script>
+</body>
+</html>
